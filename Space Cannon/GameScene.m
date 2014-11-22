@@ -8,13 +8,48 @@
 
 #import "GameScene.h"
 
-@implementation GameScene
+@implementation GameScene{
+    SKNode *_mainLayer;
+    SKSpriteNode* _cannon;
+    // these variables are used to group different nodes together
+    BOOL didShoot;
+}
+
+static inline CGVector radiansToVector(CGFloat radians){
+    CGVector vector;
+    vector.dx = cosf(radians);
+    vector.dy = sinf(radians);
+    return vector;
+}
+
+static inline CGFloat randomInRange(CGFloat low, CGFloat high){
+    CGFloat value = arc4random_uniform(UINT32_MAX) / (CGFloat) UINT32_MAX;
+    return value * (high - low) + low;
+}
+
+static const CGFloat SHOOT_SPEED = 1000.0;
+static const CGFloat HALO_LOW_ANGLE = 200.0 * M_PI / 180.0;
+static const CGFloat HALO_HIGH_ANGLE = 340.0 * M_PI / 180.0;
+static const CGFloat HALO_SPEED = 100.0;
 
 -(void)didMoveToView:(SKView *)view {
     /* Setup your scene here */
     self.size = view.bounds.size;
-    SKNode *_mainLayer;
-    SKSpriteNode* _cannon;
+    
+    // Add edges
+    SKNode *leftEdge = [[SKNode alloc] init];
+    leftEdge.physicsBody = [SKPhysicsBody bodyWithEdgeFromPoint:CGPointZero toPoint:CGPointMake(0.0, self.size.height)];
+    leftEdge.position = CGPointZero;
+    [self addChild:leftEdge];
+    
+    SKNode *rightEdge = [[SKNode alloc] init];
+    rightEdge.physicsBody = [SKPhysicsBody bodyWithEdgeFromPoint:CGPointZero toPoint:CGPointMake(0.0, self.size.height)];
+    rightEdge.position = CGPointMake(self.size.width, 0.0);
+    [self addChild:rightEdge];
+    
+
+    // Turn off gravity - We're in space!
+    self.physicsWorld.gravity = CGVectorMake(0.0, 0.0);
     
     // Add background
     SKSpriteNode* background = [SKSpriteNode spriteNodeWithImageNamed:@"Starfield"];
@@ -29,7 +64,7 @@
     
     // Add cannon
     _cannon = [SKSpriteNode spriteNodeWithImageNamed:@"Cannon"];
-    _cannon.position = CGPointMake(self.size.width *0.5, 0.0);
+    _cannon.position = CGPointMake(self.size.width * 0.5, 0.0);
     [_mainLayer addChild:_cannon];
     
     // Create cannon rotation actions
@@ -37,15 +72,69 @@
                                                   [SKAction rotateByAngle:-M_PI duration:2]]];
     [_cannon runAction:[SKAction repeatActionForever:rotateCannon]];
     
+    // Create spawn halo actions
+    SKAction *spawnHalo = [SKAction sequence:@[[SKAction waitForDuration:2 withRange: 1],
+                           [SKAction performSelector:@selector(spawnHalo) onTarget:self ]]];
+    [self runAction:[SKAction repeatActionForever:spawnHalo]];
+    
+}
+
+-(void)shoot{
+    SKSpriteNode *ball = [SKSpriteNode spriteNodeWithImageNamed:@"Ball"];
+    ball.name = @"ball";
+    CGVector rotationVector = radiansToVector(_cannon.zRotation);
+    // Need to have the ball appear the cannon's chute, and we need to take into account
+    // the rotation which is why we have rotationVector
+    ball.position = CGPointMake(_cannon.position.x + _cannon.size.width * 0.5 * rotationVector.dx,
+                                _cannon.position.y + _cannon.size.width * 0.5 * rotationVector.dy);
+    // Modify momentum retention after interaction with other physicsBody
+
     
     
     
+    ball.physicsBody =  [SKPhysicsBody bodyWithCircleOfRadius:6];
+    ball.physicsBody.velocity = CGVectorMake(rotationVector.dx * SHOOT_SPEED, rotationVector.dy * SHOOT_SPEED);
+    ball.physicsBody.restitution = 1.0f;
+    ball.physicsBody.linearDamping = 0.0;
+    ball.physicsBody.friction = 0.0;
+    
+    [_mainLayer addChild:ball];
+}
+
+-(void)spawnHalo{
+    SKSpriteNode *halo = [SKSpriteNode spriteNodeWithImageNamed:@"Halo"];
+    halo.position = CGPointMake(randomInRange(halo.size.width * 0.5, self.size.width - (halo.size.width * 0.5)),
+                                self.size.height + (halo.size.height * 0.5));
+    halo.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:16.0];
+    CGVector direction = radiansToVector(randomInRange(HALO_LOW_ANGLE, HALO_HIGH_ANGLE));
+    halo.physicsBody.velocity = CGVectorMake(direction.dx * HALO_SPEED, direction.dy * HALO_SPEED);
+    halo.physicsBody.restitution = 1.0;
+    halo.physicsBody.linearDamping = 0.0;
+    halo.physicsBody.friction = 0.0;
+    [_mainLayer addChild:halo];
+
+    
+}
+
+// We remove the node from the parent so that the physics simulator stops processing the balls
+// once they have gone off screen (performance)
+-(void)didSimulatePhysics{
+    [_mainLayer enumerateChildNodesWithName:@"ball" usingBlock:^(SKNode *node, BOOL *stop) {
+        if(!CGRectContainsPoint(self.frame, node.position))
+            [node removeFromParent];
+    }];
+    
+    if(didShoot == TRUE){
+        [self shoot];
+        didShoot = FALSE;
+    }
 }
 
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     /* Called when a touch begins */
     
     for (UITouch *touch in touches) {
+        didShoot = TRUE;
 
     }
 }
