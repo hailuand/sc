@@ -31,20 +31,26 @@ static const CGFloat SHOOT_SPEED = 1000.0;
 static const CGFloat HALO_LOW_ANGLE = 200.0 * M_PI / 180.0;
 static const CGFloat HALO_HIGH_ANGLE = 340.0 * M_PI / 180.0;
 static const CGFloat HALO_SPEED = 100.0;
+static uint32_t HALO_CATEGORY = 0x1 << 0;
+static uint32_t BALL_CATEGORY = 0x1 << 1;
+static uint32_t EDGE_CATEGORY = 0X1 << 2;
 
 -(void)didMoveToView:(SKView *)view {
     /* Setup your scene here */
     self.size = view.bounds.size;
+    self.physicsWorld.contactDelegate = self;
     
     // Add edges
     SKNode *leftEdge = [[SKNode alloc] init];
     leftEdge.physicsBody = [SKPhysicsBody bodyWithEdgeFromPoint:CGPointZero toPoint:CGPointMake(0.0, self.size.height)];
     leftEdge.position = CGPointZero;
+    leftEdge.physicsBody.categoryBitMask = EDGE_CATEGORY;
     [self addChild:leftEdge];
     
     SKNode *rightEdge = [[SKNode alloc] init];
     rightEdge.physicsBody = [SKPhysicsBody bodyWithEdgeFromPoint:CGPointZero toPoint:CGPointMake(0.0, self.size.height)];
     rightEdge.position = CGPointMake(self.size.width, 0.0);
+    rightEdge.physicsBody.categoryBitMask = EDGE_CATEGORY;
     [self addChild:rightEdge];
     
 
@@ -79,6 +85,26 @@ static const CGFloat HALO_SPEED = 100.0;
     
 }
 
+-(void)didBeginContact:(SKPhysicsContact *)contact{
+    SKPhysicsBody *firstBody;
+    SKPhysicsBody *secondBody;
+    
+    // HALO < BALL < EDGE
+    if(contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask){
+        firstBody = contact.bodyA;
+        secondBody = contact.bodyB;
+    }
+    else{
+        firstBody = contact.bodyB;
+        secondBody = contact.bodyA;
+    }
+    if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == BALL_CATEGORY){
+        // halo and ball collided
+        [firstBody.node removeFromParent];
+        [secondBody.node removeFromParent];
+    }
+}
+
 -(void)shoot{
     SKSpriteNode *ball = [SKSpriteNode spriteNodeWithImageNamed:@"Ball"];
     ball.name = @"ball";
@@ -88,16 +114,14 @@ static const CGFloat HALO_SPEED = 100.0;
     ball.position = CGPointMake(_cannon.position.x + _cannon.size.width * 0.5 * rotationVector.dx,
                                 _cannon.position.y + _cannon.size.width * 0.5 * rotationVector.dy);
     // Modify momentum retention after interaction with other physicsBody
-
-    
-    
     
     ball.physicsBody =  [SKPhysicsBody bodyWithCircleOfRadius:6];
     ball.physicsBody.velocity = CGVectorMake(rotationVector.dx * SHOOT_SPEED, rotationVector.dy * SHOOT_SPEED);
     ball.physicsBody.restitution = 1.0f;
     ball.physicsBody.linearDamping = 0.0;
     ball.physicsBody.friction = 0.0;
-    
+    ball.physicsBody.categoryBitMask = BALL_CATEGORY;
+    ball.physicsBody.collisionBitMask = EDGE_CATEGORY;
     [_mainLayer addChild:ball];
 }
 
@@ -111,6 +135,9 @@ static const CGFloat HALO_SPEED = 100.0;
     halo.physicsBody.restitution = 1.0;
     halo.physicsBody.linearDamping = 0.0;
     halo.physicsBody.friction = 0.0;
+    halo.physicsBody.categoryBitMask = HALO_CATEGORY;
+    halo.physicsBody.collisionBitMask = EDGE_CATEGORY | HALO_CATEGORY;
+    halo.physicsBody.contactTestBitMask = BALL_CATEGORY;
     [_mainLayer addChild:halo];
 
     
