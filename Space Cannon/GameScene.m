@@ -15,6 +15,11 @@
     SKLabelNode *_scoreLabel;
     // these variables are used to group different nodes together
     BOOL didShoot;
+    SKAction *_haloBoomSound;
+    SKAction *_deathSound;
+    SKAction *_bgMusic;
+    SKAction *_shootSound;
+    
 }
 
 static inline CGVector radiansToVector(CGFloat radians){
@@ -43,6 +48,16 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     /* Setup your scene here */
     self.size = view.bounds.size;
     self.physicsWorld.contactDelegate = self;
+    
+    // Load sound files
+    _deathSound = [SKAction playSoundFileNamed:@"death.caf" waitForCompletion:NO];
+    _bgMusic = [SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:NO];
+    _haloBoomSound = [SKAction playSoundFileNamed:@"halo_boom.caf" waitForCompletion:NO];
+    _shootSound = [SKAction playSoundFileNamed:@"shoot.caf" waitForCompletion:NO];
+    
+    // Megaman II!
+    SKAction *bgMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
+    [self runAction: bgMusic];
     
     // Add edges
     SKNode *leftEdge = [[SKNode alloc] init];
@@ -136,6 +151,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == BALL_CATEGORY){
         // halo and ball collided
+        [self runAction: _haloBoomSound];
         self.score++;
         [self addExplosion:firstBody.node.position withName:@"HaloExplosion"];
         [firstBody.node removeFromParent];
@@ -149,6 +165,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == LIFEBAR_CATEGORY){
         // lifebar and halo collided, game over
+        [self runAction: _deathSound];
         [self addExplosion:firstBody.node.position withName:@"LifeBarExplosion"];
         [secondBody.node removeFromParent];
         [self gameOver];
@@ -181,6 +198,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 }
 
 -(void)gameOver{
+   
     [_mainLayer enumerateChildNodesWithName:@"halo" usingBlock:^(SKNode *node, BOOL *stop) {
         [self addExplosion:node.position withName:@"HaloExplosion"];
         [node removeFromParent];
@@ -198,6 +216,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 
 -(void)shoot{
     if(self.ammo > 0){
+        [self runAction:_shootSound];
         self.ammo--;
         SKSpriteNode *ball = [SKSpriteNode spriteNodeWithImageNamed:@"Ball"];
         ball.name = @"ball";
