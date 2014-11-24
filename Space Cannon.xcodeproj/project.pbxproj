@@ -28,6 +28,7 @@
 		FE1DDA851A202889000ADB1A /* Cannon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE1DDA791A202889000ADB1A /* Cannon@2x.png */; };
 		FE1DDA861A202889000ADB1A /* Halo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE1DDA7A1A202889000ADB1A /* Halo@2x.png */; };
 		FE1DDA871A202889000ADB1A /* Starfield@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE1DDA7B1A202889000ADB1A /* Starfield@2x.png */; };
+		FE457E2A1A22AA1E002B46ED /* LifeBarExplosion.sks in Resources */ = {isa = PBXBuildFile; fileRef = FE457E291A22AA1E002B46ED /* LifeBarExplosion.sks */; };
 		FEA6C1B51A2261890051C05E /* HaloExplosion.sks in Resources */ = {isa = PBXBuildFile; fileRef = FEA6C1B31A2261890051C05E /* HaloExplosion.sks */; };
 		FEA6C1B61A2261890051C05E /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = FEA6C1B41A2261890051C05E /* spark.png */; };
 /* End PBXBuildFile section */
@@ -71,6 +72,7 @@
 		FE1DDA791A202889000ADB1A /* Cannon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Cannon@2x.png"; sourceTree = "<group>"; };
 		FE1DDA7A1A202889000ADB1A /* Halo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Halo@2x.png"; sourceTree = "<group>"; };
 		FE1DDA7B1A202889000ADB1A /* Starfield@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Starfield@2x.png"; sourceTree = "<group>"; };
+		FE457E291A22AA1E002B46ED /* LifeBarExplosion.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = LifeBarExplosion.sks; sourceTree = "<group>"; };
 		FEA6C1B31A2261890051C05E /* HaloExplosion.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = HaloExplosion.sks; sourceTree = "<group>"; };
 		FEA6C1B41A2261890051C05E /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -119,6 +121,7 @@
 				FE1DDA491A200409000ADB1A /* AppDelegate.m */,
 				FE1DDA4B1A200409000ADB1A /* GameScene.h */,
 				FE1DDA4C1A200409000ADB1A /* GameScene.m */,
+				FE457E291A22AA1E002B46ED /* LifeBarExplosion.sks */,
 				FEA6C1B31A2261890051C05E /* HaloExplosion.sks */,
 				FEA6C1B41A2261890051C05E /* spark.png */,
 				FE1DDA4E1A200409000ADB1A /* GameScene.sks */,
@@ -263,6 +266,7 @@
 				FE1DDA5A1A200409000ADB1A /* LaunchScreen.xib in Resources */,
 				FE1DDA841A202889000ADB1A /* BlueBar@2x.png in Resources */,
 				FE1DDA801A202889000ADB1A /* Ammo4@2x.png in Resources */,
+				FE457E2A1A22AA1E002B46ED /* LifeBarExplosion.sks in Resources */,
 				FE1DDA831A202889000ADB1A /* Block@2x.png in Resources */,
 				FE1DDA7C1A202889000ADB1A /* Ammo0@2x.png in Resources */,
 				FE1DDA7D1A202889000ADB1A /* Ammo1@2x.png in Resources */,
