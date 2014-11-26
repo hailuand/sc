@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE16E7231A24E5260042F62D /* PlayButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE16E7201A24E5260042F62D /* PlayButton@2x.png */; };
+		FE16E7241A24E5260042F62D /* ScoreBoard@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE16E7211A24E5260042F62D /* ScoreBoard@2x.png */; };
+		FE16E7251A24E5260042F62D /* Title@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE16E7221A24E5260042F62D /* Title@2x.png */; };
+		FE16E7281A24E5B30042F62D /* CCMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = FE16E7271A24E5B30042F62D /* CCMenu.m */; };
 		FE1DDA471A200409000ADB1A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = FE1DDA461A200409000ADB1A /* main.m */; };
 		FE1DDA4A1A200409000ADB1A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = FE1DDA491A200409000ADB1A /* AppDelegate.m */; };
 		FE1DDA4D1A200409000ADB1A /* GameScene.m in Sources */ = {isa = PBXBuildFile; fileRef = FE1DDA4C1A200409000ADB1A /* GameScene.m */; };
@@ -48,6 +52,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		FE16E7201A24E5260042F62D /* PlayButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "PlayButton@2x.png"; sourceTree = "<group>"; };
+		FE16E7211A24E5260042F62D /* ScoreBoard@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ScoreBoard@2x.png"; sourceTree = "<group>"; };
+		FE16E7221A24E5260042F62D /* Title@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Title@2x.png"; sourceTree = "<group>"; };
+		FE16E7261A24E5B30042F62D /* CCMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCMenu.h; sourceTree = "<group>"; };
+		FE16E7271A24E5B30042F62D /* CCMenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCMenu.m; sourceTree = "<group>"; };
 		FE1DDA411A200409000ADB1A /* Space Cannon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Space Cannon.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE1DDA451A200409000ADB1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FE1DDA461A200409000ADB1A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -143,6 +152,8 @@
 				FE1DDA561A200409000ADB1A /* Images.xcassets */,
 				FE1DDA581A200409000ADB1A /* LaunchScreen.xib */,
 				FE1DDA441A200409000ADB1A /* Supporting Files */,
+				FE16E7261A24E5B30042F62D /* CCMenu.h */,
+				FE16E7271A24E5B30042F62D /* CCMenu.m */,
 			);
 			path = "Space Cannon";
 			sourceTree = "<group>";
@@ -176,6 +187,9 @@
 		FE1DDA6F1A202889000ADB1A /* 14049620092014-04-16_03-09-08__SpaceCannonAssets */ = {
 			isa = PBXGroup;
 			children = (
+				FE16E7201A24E5260042F62D /* PlayButton@2x.png */,
+				FE16E7211A24E5260042F62D /* ScoreBoard@2x.png */,
+				FE16E7221A24E5260042F62D /* Title@2x.png */,
 				FE1DDA701A202889000ADB1A /* Ammo0@2x.png */,
 				FE1DDA711A202889000ADB1A /* Ammo1@2x.png */,
 				FE1DDA721A202889000ADB1A /* Ammo2@2x.png */,
@@ -275,11 +289,13 @@
 				FE1DDA811A202889000ADB1A /* Ammo5@2x.png in Resources */,
 				FE2F1F521A23C42400C3FBE7 /* halo_boom.caf in Resources */,
 				FEA6C1B61A2261890051C05E /* spark.png in Resources */,
+				FE16E7241A24E5260042F62D /* ScoreBoard@2x.png in Resources */,
 				FE2F1F531A23C42400C3FBE7 /* shoot.caf in Resources */,
 				FE1DDA821A202889000ADB1A /* Ball@2x.png in Resources */,
 				FE1DDA5A1A200409000ADB1A /* LaunchScreen.xib in Resources */,
 				FE1DDA841A202889000ADB1A /* BlueBar@2x.png in Resources */,
 				FE2F1F501A23C42400C3FBE7 /* bg_music.caf in Resources */,
+				FE16E7231A24E5260042F62D /* PlayButton@2x.png in Resources */,
 				FE1DDA801A202889000ADB1A /* Ammo4@2x.png in Resources */,
 				FE457E2A1A22AA1E002B46ED /* LifeBarExplosion.sks in Resources */,
 				FE1DDA831A202889000ADB1A /* Block@2x.png in Resources */,
@@ -293,6 +309,7 @@
 				FE2F1F511A23C42400C3FBE7 /* death.caf in Resources */,
 				FE1DDA7F1A202889000ADB1A /* Ammo3@2x.png in Resources */,
 				FE1DDA861A202889000ADB1A /* Halo@2x.png in Resources */,
+				FE16E7251A24E5260042F62D /* Title@2x.png in Resources */,
 				FE1DDA7E1A202889000ADB1A /* Ammo2@2x.png in Resources */,
 				FE1DDA851A202889000ADB1A /* Cannon@2x.png in Resources */,
 			);
@@ -314,6 +331,7 @@
 			files = (
 				FE1DDA521A200409000ADB1A /* GameViewController.m in Sources */,
 				FE1DDA4A1A200409000ADB1A /* AppDelegate.m in Sources */,
+				FE16E7281A24E5B30042F62D /* CCMenu.m in Sources */,
 				FE1DDA4D1A200409000ADB1A /* GameScene.m in Sources */,
 				FE1DDA471A200409000ADB1A /* main.m in Sources */,
 			);

@@ -7,14 +7,18 @@
 //
 
 #import "GameScene.h"
+#import "CCMenu.h"
 
 @implementation GameScene{
     SKNode *_mainLayer;
+    SKNode *_musicLayer;
+    CCMenu *_menu;
     SKSpriteNode *_cannon;
     SKSpriteNode *_ammoDisplay;
     SKLabelNode *_scoreLabel;
     // these variables are used to group different nodes together
     BOOL didShoot;
+    BOOL gameOver;
     SKAction *_haloBoomSound;
     SKAction *_deathSound;
     SKAction *_bgMusic;
@@ -55,9 +59,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     _haloBoomSound = [SKAction playSoundFileNamed:@"halo_boom.caf" waitForCompletion:NO];
     _shootSound = [SKAction playSoundFileNamed:@"shoot.caf" waitForCompletion:NO];
     
-    // Megaman II!
-    SKAction *bgMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
-    [self runAction: bgMusic];
+    
     
     // Add edges
     SKNode *leftEdge = [[SKNode alloc] init];
@@ -120,8 +122,18 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     _scoreLabel.fontSize = 15;
     [self addChild:_scoreLabel];
     
-    [self newGame];
+    // Setup Menu
+    _menu = [[CCMenu alloc] init];
+    _menu.position = CGPointMake(self.size.width*0.5, self.size.height - 220);
+    [self addChild:_menu];
     
+    
+    
+    // Instantiate initial values
+    self.ammo = 5;
+    self.score = 0;
+    gameOver = YES;
+    _scoreLabel.hidden = YES;
 }
 
 -(void)setAmmo:(int)ammo{
@@ -159,6 +171,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == SHIELD_CATEGORY){
         // shield and halo collided
+        [self runAction: _haloBoomSound];
         [self addExplosion:firstBody.node.position withName:@"HaloExplosion"];
         [firstBody.node removeFromParent];
         [secondBody.node removeFromParent];
@@ -173,9 +186,16 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 }
 
 -(void)newGame{
-    self.ammo = 5;
     self.score = 0;
+    self.ammo = 5;
+    _scoreLabel.hidden = NO;
+    _menu.hidden = YES;
+    gameOver = NO;
     [_mainLayer removeAllChildren];
+    
+    // Megaman II!
+    SKAction *gameMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
+    [_mainLayer runAction:gameMusic];
     
     // Setup shield
     for(int i = 0; i < 6; ++i){
@@ -210,8 +230,17 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
         [node removeFromParent];
     }];
     
-    // New game after 3s
-    [self performSelector:@selector(newGame) withObject:nil afterDelay:3];
+    [_mainLayer removeAllChildren];
+    [_musicLayer removeActionForKey:@"gameMusic"];
+    
+    _menu.score = self.score;
+    if(self.score > _menu.topScore)
+        _menu.topScore = self.score;
+    
+    _scoreLabel.hidden = YES;
+    _menu.hidden = NO;
+    gameOver = YES;
+    
 }
 
 -(void)shoot{
@@ -288,9 +317,23 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     /* Called when a touch begins */
     
+    /* only want to shoot if we're in a game! */
     for (UITouch *touch in touches) {
-        didShoot = TRUE;
+        if(!gameOver){
+            didShoot = TRUE;
+        }
+    }
+}
 
+-(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
+    for (UITouch *touch in touches){
+        /* Starts a new game when play button is touched */
+        if(gameOver){
+            SKNode *n = [_menu nodeAtPoint:[touch locationInNode:_menu]];
+            if([n.name isEqual:@"Play"]){
+                [self newGame];
+            }
+        }
     }
 }
 
