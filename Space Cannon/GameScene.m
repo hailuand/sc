@@ -23,6 +23,7 @@
     SKAction *_deathSound;
     SKAction *_bgMusic;
     SKAction *_shootSound;
+    NSUserDefaults *_userDefaults;
     
 }
 
@@ -47,6 +48,7 @@ static uint32_t BALL_CATEGORY = 0x1 << 1;
 static uint32_t EDGE_CATEGORY = 0X1 << 2;
 static uint32_t SHIELD_CATEGORY = 0x1 << 3;
 static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
+static NSString * const keyTopScore = @"TopScore";
 
 -(void)didMoveToView:(SKView *)view {
     /* Setup your scene here */
@@ -59,7 +61,9 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     _haloBoomSound = [SKAction playSoundFileNamed:@"halo_boom.caf" waitForCompletion:NO];
     _shootSound = [SKAction playSoundFileNamed:@"shoot.caf" waitForCompletion:NO];
     
-    
+    // Megaman II!
+    SKAction *gameMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
+    [self runAction:gameMusic];
     
     // Add edges
     SKNode *leftEdge = [[SKNode alloc] init];
@@ -102,7 +106,7 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     // Create spawn halo actions
     SKAction *spawnHalo = [SKAction sequence:@[[SKAction waitForDuration:2 withRange: 1],
                            [SKAction performSelector:@selector(spawnHalo) onTarget:self ]]];
-    [self runAction:[SKAction repeatActionForever:spawnHalo]];
+    [self runAction:[SKAction repeatActionForever:spawnHalo] withKey:@"SpawnHalo"];
     
     // Setup ammo
     _ammoDisplay = [SKSpriteNode spriteNodeWithImageNamed:@"Ammo5"];
@@ -127,13 +131,15 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     _menu.position = CGPointMake(self.size.width*0.5, self.size.height - 220);
     [self addChild:_menu];
     
-    
-    
     // Instantiate initial values
     self.ammo = 5;
     self.score = 0;
     gameOver = YES;
     _scoreLabel.hidden = YES;
+    
+    // Load top score
+    _userDefaults = [NSUserDefaults standardUserDefaults];
+    _menu.topScore = [_userDefaults integerForKey:keyTopScore];
 }
 
 -(void)setAmmo:(int)ammo{
@@ -186,16 +192,16 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 }
 
 -(void)newGame{
+    // Set initial values
     self.score = 0;
     self.ammo = 5;
+    [self actionForKey:@"SpawnHalo"].speed = 1;
+    
     _scoreLabel.hidden = NO;
     _menu.hidden = YES;
     gameOver = NO;
     [_mainLayer removeAllChildren];
-    
-    // Megaman II!
-    SKAction *gameMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
-    [_mainLayer runAction:gameMusic];
+
     
     // Setup shield
     for(int i = 0; i < 6; ++i){
@@ -234,8 +240,12 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
     [_musicLayer removeActionForKey:@"gameMusic"];
     
     _menu.score = self.score;
-    if(self.score > _menu.topScore)
+    if(self.score > _menu.topScore){
         _menu.topScore = self.score;
+        /* Save this to NSUserData */
+        [_userDefaults setInteger:self.score forKey:keyTopScore];
+        [_userDefaults synchronize];
+    }
     
     _scoreLabel.hidden = YES;
     _menu.hidden = NO;
@@ -268,6 +278,12 @@ static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 }
 
 -(void)spawnHalo{
+    // Increase spawn speed over time
+    SKAction *spawnHaloAction = [self actionForKey:@"SpawnHalo"];
+    if(spawnHaloAction.speed < 1.5){
+        spawnHaloAction.speed += .01;
+    }
+    
     SKSpriteNode *halo = [SKSpriteNode spriteNodeWithImageNamed:@"Halo"];
     halo.name = @"halo";
     halo.position = CGPointMake(randomInRange(halo.size.width * 0.5, self.size.width - (halo.size.width * 0.5)),
