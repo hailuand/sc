@@ -8,6 +8,7 @@
 
 #import "GameScene.h"
 #import "CCMenu.h"
+#import "CCBall.h"
 
 @implementation GameScene{
     SKNode *_mainLayer;
@@ -16,6 +17,7 @@
     SKSpriteNode *_cannon;
     SKSpriteNode *_ammoDisplay;
     SKLabelNode *_scoreLabel;
+    SKLabelNode *_pointLabel;
     // these variables are used to group different nodes together
     BOOL didShoot;
     BOOL gameOver;
@@ -119,7 +121,13 @@ static NSString * const keyTopScore = @"TopScore";
     }]]];
     [self runAction:[SKAction repeatActionForever:incrementAmmo]];
     
-    // Setup score display
+    // Setup point multiplier label
+    _pointLabel = [SKLabelNode labelNodeWithFontNamed:@"DIN Alternate"];
+    _pointLabel.position = CGPointMake(15, 30);
+    _pointLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeLeft;
+    _pointLabel.fontSize = 15;
+    [self addChild:_pointLabel];
+    
     _scoreLabel = [SKLabelNode labelNodeWithFontNamed:@"DIN Alternate"];
     _scoreLabel.position = CGPointMake(15, 10);
     _scoreLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeLeft;
@@ -136,6 +144,7 @@ static NSString * const keyTopScore = @"TopScore";
     self.score = 0;
     gameOver = YES;
     _scoreLabel.hidden = YES;
+    _pointLabel.hidden = NO;
     
     // Load top score
     _userDefaults = [NSUserDefaults standardUserDefaults];
@@ -154,6 +163,11 @@ static NSString * const keyTopScore = @"TopScore";
     _scoreLabel.text = [NSString stringWithFormat:@"Score: %d", score];
 }
 
+-(void)setPointValue:(int)pointValue{
+    _pointValue = pointValue;
+    _pointLabel.text = [NSString stringWithFormat:@"Points: x%d", _pointValue];
+}
+
 -(void)didBeginContact:(SKPhysicsContact *)contact{
     SKPhysicsBody *firstBody;
     SKPhysicsBody *secondBody;
@@ -169,9 +183,12 @@ static NSString * const keyTopScore = @"TopScore";
     }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == BALL_CATEGORY){
         // halo and ball collided
+        self.score += self.pointValue;
         [self runAction: _haloBoomSound];
-        self.score++;
         [self addExplosion:firstBody.node.position withName:@"HaloExplosion"];
+        if ([[firstBody.node.userData valueForKey:@"Multiplier"] boolValue]) {
+            self.pointValue++;
+        }
         [firstBody.node removeFromParent];
         [secondBody.node removeFromParent];
     }
@@ -195,9 +212,11 @@ static NSString * const keyTopScore = @"TopScore";
     // Set initial values
     self.score = 0;
     self.ammo = 5;
+    self.pointValue = 0;
     [self actionForKey:@"SpawnHalo"].speed = 1;
     
     _scoreLabel.hidden = NO;
+    _pointLabel.hidden = NO;
     _menu.hidden = YES;
     gameOver = NO;
     [_mainLayer removeAllChildren];
@@ -255,9 +274,10 @@ static NSString * const keyTopScore = @"TopScore";
 
 -(void)shoot{
     if(self.ammo > 0){
+        // Create ball
+        CCBall *ball = [CCBall spriteNodeWithImageNamed:@"Ball"];
         [self runAction:_shootSound];
         self.ammo--;
-        SKSpriteNode *ball = [SKSpriteNode spriteNodeWithImageNamed:@"Ball"];
         ball.name = @"ball";
         CGVector rotationVector = radiansToVector(_cannon.zRotation);
         // Need to have the ball appear the cannon's chute, and we need to take into account
@@ -273,9 +293,18 @@ static NSString * const keyTopScore = @"TopScore";
         ball.physicsBody.friction = 0.0;
         ball.physicsBody.categoryBitMask = BALL_CATEGORY;
         ball.physicsBody.collisionBitMask = EDGE_CATEGORY;
+        
+        // Create ball's particle trail
+        NSString *ballTrailPath = [[NSBundle mainBundle] pathForResource:@"BallTrail" ofType:@"sks"];
+        SKEmitterNode *ballTrail = [NSKeyedUnarchiver unarchiveObjectWithFile:ballTrailPath];
+        ballTrail.targetNode = _mainLayer;
+        [_mainLayer addChild:ballTrail];
         [_mainLayer addChild:ball];
+        ball.trail = ballTrail;
     }
 }
+
+
 
 -(void)spawnHalo{
     // Increase spawn speed over time
@@ -298,6 +327,13 @@ static NSString * const keyTopScore = @"TopScore";
     halo.physicsBody.collisionBitMask = EDGE_CATEGORY | HALO_CATEGORY;
     halo.physicsBody.contactTestBitMask = BALL_CATEGORY | SHIELD_CATEGORY | LIFEBAR_CATEGORY;
     [_mainLayer addChild:halo];
+    
+    // Random point multiplier
+    if(!gameOver && arc4random_uniform(6) == 0){
+        halo.texture = [SKTexture textureWithImageNamed:@"HaloX"];
+        halo.userData = [[NSMutableDictionary alloc] init];
+        [halo.userData setValue:@YES forKey:@"Multiplier"];
+    }
 
     
 }
@@ -306,8 +342,13 @@ static NSString * const keyTopScore = @"TopScore";
 // once they have gone off screen (performance)
 -(void)didSimulatePhysics{
     [_mainLayer enumerateChildNodesWithName:@"ball" usingBlock:^(SKNode *node, BOOL *stop) {
-        if(!CGRectContainsPoint(self.frame, node.position))
+        if(!CGRectContainsPoint(self.frame, node.position)){
             [node removeFromParent];
+            self.pointValue = 1;
+        }
+        if([node respondsToSelector:@selector(updateTrail)]){
+            [node performSelector:@selector(updateTrail) withObject:nil afterDelay:0.0];
+        }
     }];
     
     if(didShoot == TRUE){

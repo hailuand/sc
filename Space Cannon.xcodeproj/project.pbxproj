@@ -37,6 +37,9 @@
 		FE2F1F521A23C42400C3FBE7 /* halo_boom.caf in Resources */ = {isa = PBXBuildFile; fileRef = FE2F1F4E1A23C42400C3FBE7 /* halo_boom.caf */; };
 		FE2F1F531A23C42400C3FBE7 /* shoot.caf in Resources */ = {isa = PBXBuildFile; fileRef = FE2F1F4F1A23C42400C3FBE7 /* shoot.caf */; };
 		FE457E2A1A22AA1E002B46ED /* LifeBarExplosion.sks in Resources */ = {isa = PBXBuildFile; fileRef = FE457E291A22AA1E002B46ED /* LifeBarExplosion.sks */; };
+		FE7F99771A26D9B100B0D861 /* BallTrail.sks in Resources */ = {isa = PBXBuildFile; fileRef = FE7F99761A26D9B100B0D861 /* BallTrail.sks */; };
+		FE7F997A1A26DDEF00B0D861 /* CCBall.m in Sources */ = {isa = PBXBuildFile; fileRef = FE7F99791A26DDEF00B0D861 /* CCBall.m */; };
+		FE7F997C1A26E2DC00B0D861 /* HaloX@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FE7F997B1A26E2DC00B0D861 /* HaloX@2x.png */; };
 		FEA6C1B51A2261890051C05E /* HaloExplosion.sks in Resources */ = {isa = PBXBuildFile; fileRef = FEA6C1B31A2261890051C05E /* HaloExplosion.sks */; };
 		FEA6C1B61A2261890051C05E /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = FEA6C1B41A2261890051C05E /* spark.png */; };
 /* End PBXBuildFile section */
@@ -90,6 +93,10 @@
 		FE2F1F4E1A23C42400C3FBE7 /* halo_boom.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = halo_boom.caf; sourceTree = "<group>"; };
 		FE2F1F4F1A23C42400C3FBE7 /* shoot.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = shoot.caf; sourceTree = "<group>"; };
 		FE457E291A22AA1E002B46ED /* LifeBarExplosion.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = LifeBarExplosion.sks; sourceTree = "<group>"; };
+		FE7F99761A26D9B100B0D861 /* BallTrail.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = BallTrail.sks; sourceTree = "<group>"; };
+		FE7F99781A26DDEF00B0D861 /* CCBall.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCBall.h; sourceTree = "<group>"; };
+		FE7F99791A26DDEF00B0D861 /* CCBall.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCBall.m; sourceTree = "<group>"; };
+		FE7F997B1A26E2DC00B0D861 /* HaloX@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "HaloX@2x.png"; path = "../HaloX@2x.png"; sourceTree = "<group>"; };
 		FEA6C1B31A2261890051C05E /* HaloExplosion.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = HaloExplosion.sks; sourceTree = "<group>"; };
 		FEA6C1B41A2261890051C05E /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -115,6 +122,8 @@
 		FE1DDA381A200409000ADB1A = {
 			isa = PBXGroup;
 			children = (
+				FE7F99781A26DDEF00B0D861 /* CCBall.h */,
+				FE7F99791A26DDEF00B0D861 /* CCBall.m */,
 				FE1DDA431A200409000ADB1A /* Space Cannon */,
 				FE1DDA621A200409000ADB1A /* Space CannonTests */,
 				FE1DDA421A200409000ADB1A /* Products */,
@@ -154,6 +163,7 @@
 				FE1DDA441A200409000ADB1A /* Supporting Files */,
 				FE16E7261A24E5B30042F62D /* CCMenu.h */,
 				FE16E7271A24E5B30042F62D /* CCMenu.m */,
+				FE7F99761A26D9B100B0D861 /* BallTrail.sks */,
 			);
 			path = "Space Cannon";
 			sourceTree = "<group>";
@@ -187,6 +197,7 @@
 		FE1DDA6F1A202889000ADB1A /* 14049620092014-04-16_03-09-08__SpaceCannonAssets */ = {
 			isa = PBXGroup;
 			children = (
+				FE7F997B1A26E2DC00B0D861 /* HaloX@2x.png */,
 				FE16E7201A24E5260042F62D /* PlayButton@2x.png */,
 				FE16E7211A24E5260042F62D /* ScoreBoard@2x.png */,
 				FE16E7221A24E5260042F62D /* Title@2x.png */,
@@ -299,6 +310,7 @@
 				FE1DDA801A202889000ADB1A /* Ammo4@2x.png in Resources */,
 				FE457E2A1A22AA1E002B46ED /* LifeBarExplosion.sks in Resources */,
 				FE1DDA831A202889000ADB1A /* Block@2x.png in Resources */,
+				FE7F997C1A26E2DC00B0D861 /* HaloX@2x.png in Resources */,
 				FE1DDA7C1A202889000ADB1A /* Ammo0@2x.png in Resources */,
 				FE1DDA7D1A202889000ADB1A /* Ammo1@2x.png in Resources */,
 				FE1DDA571A200409000ADB1A /* Images.xcassets in Resources */,
@@ -307,6 +319,7 @@
 				FE1DDA551A200409000ADB1A /* Main.storyboard in Resources */,
 				FE1DDA871A202889000ADB1A /* Starfield@2x.png in Resources */,
 				FE2F1F511A23C42400C3FBE7 /* death.caf in Resources */,
+				FE7F99771A26D9B100B0D861 /* BallTrail.sks in Resources */,
 				FE1DDA7F1A202889000ADB1A /* Ammo3@2x.png in Resources */,
 				FE1DDA861A202889000ADB1A /* Halo@2x.png in Resources */,
 				FE16E7251A24E5260042F62D /* Title@2x.png in Resources */,
@@ -331,6 +344,7 @@
 			files = (
 				FE1DDA521A200409000ADB1A /* GameViewController.m in Sources */,
 				FE1DDA4A1A200409000ADB1A /* AppDelegate.m in Sources */,
+				FE7F997A1A26DDEF00B0D861 /* CCBall.m in Sources */,
 				FE16E7281A24E5B30042F62D /* CCMenu.m in Sources */,
 				FE1DDA4D1A200409000ADB1A /* GameScene.m in Sources */,
 				FE1DDA471A200409000ADB1A /* main.m in Sources */,
