@@ -13,6 +13,7 @@
 @implementation GameScene{
     SKNode *_mainLayer;
     SKNode *_musicLayer;
+    SKNode *_haloLayer;
     CCMenu *_menu;
     SKSpriteNode *_cannon;
     SKSpriteNode *_ammoDisplay;
@@ -24,8 +25,10 @@
     SKAction *_haloBoomSound;
     SKAction *_deathSound;
     SKAction *_bgMusic;
+    SKAction *_shieldUpSound;
     SKAction *_shootSound;
     NSUserDefaults *_userDefaults;
+    NSMutableArray *_shieldPool;
     
 }
 
@@ -50,6 +53,7 @@ static uint32_t BALL_CATEGORY = 0x1 << 1;
 static uint32_t EDGE_CATEGORY = 0X1 << 2;
 static uint32_t SHIELD_CATEGORY = 0x1 << 3;
 static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
+static uint32_t SHIELDUP_CATEGORY = 0x1 << 5;
 static NSString * const keyTopScore = @"TopScore";
 
 -(void)didMoveToView:(SKView *)view {
@@ -59,12 +63,13 @@ static NSString * const keyTopScore = @"TopScore";
     
     // Load sound files
     _deathSound = [SKAction playSoundFileNamed:@"death.caf" waitForCompletion:NO];
-    _bgMusic = [SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:NO];
+    _bgMusic = [SKAction playSoundFileNamed:@"fncy.caf" waitForCompletion:YES];
     _haloBoomSound = [SKAction playSoundFileNamed:@"halo_boom.caf" waitForCompletion:NO];
     _shootSound = [SKAction playSoundFileNamed:@"shoot.caf" waitForCompletion:NO];
+    _shieldUpSound = [SKAction playSoundFileNamed:@"ShieldUp.caf" waitForCompletion:NO];
     
     // Megaman II!
-    SKAction *gameMusic = [SKAction repeatActionForever:[SKAction playSoundFileNamed:@"bg_music.caf" waitForCompletion:YES]];
+    SKAction *gameMusic = [SKAction repeatActionForever:_bgMusic];
     [self runAction:gameMusic];
     
     // Add edges
@@ -95,6 +100,10 @@ static NSString * const keyTopScore = @"TopScore";
     _mainLayer = [[SKNode alloc] init];
     [self addChild:_mainLayer];
     
+    // Add halo layer
+    _haloLayer = [[SKNode alloc] init];
+    [self addChild:_haloLayer];
+    
     // Add cannon
     _cannon = [SKSpriteNode spriteNodeWithImageNamed:@"Cannon"];
     _cannon.position = CGPointMake(self.size.width * 0.5, 0.0);
@@ -109,6 +118,12 @@ static NSString * const keyTopScore = @"TopScore";
     SKAction *spawnHalo = [SKAction sequence:@[[SKAction waitForDuration:2 withRange: 1],
                            [SKAction performSelector:@selector(spawnHalo) onTarget:self ]]];
     [self runAction:[SKAction repeatActionForever:spawnHalo] withKey:@"SpawnHalo"];
+    
+    // Create spawn shield powerup action
+    SKAction *spawnShieldPowerUp = [SKAction sequence:@[[SKAction waitForDuration:15 withRange:4],
+                                                        [SKAction performSelector:@selector(spawnShieldPowerUp) onTarget:self]]];
+    [self runAction:[SKAction repeatActionForever:spawnShieldPowerUp]];
+    [self runAction:spawnShieldPowerUp];
     
     // Setup ammo
     _ammoDisplay = [SKSpriteNode spriteNodeWithImageNamed:@"Ammo5"];
@@ -149,6 +164,22 @@ static NSString * const keyTopScore = @"TopScore";
     // Load top score
     _userDefaults = [NSUserDefaults standardUserDefaults];
     _menu.topScore = [_userDefaults integerForKey:keyTopScore];
+    
+    // Setup shield pool
+    _shieldPool = [[NSMutableArray alloc] init];
+    
+    
+    
+    // Setup shield
+    for(int i = 0; i < 6; ++i){
+        SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:@"Block"];
+        shield.name = @"shield";
+        shield.position = CGPointMake(35 + (50 * i), 90);
+        shield.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:CGSizeMake(42, 9)];
+        shield.physicsBody.categoryBitMask = SHIELD_CATEGORY;
+        shield.physicsBody.collisionBitMask = 0;
+        [_shieldPool addObject:shield];
+    }
 }
 
 -(void)setAmmo:(int)ammo{
@@ -189,6 +220,13 @@ static NSString * const keyTopScore = @"TopScore";
         if ([[firstBody.node.userData valueForKey:@"Multiplier"] boolValue]) {
             self.pointValue++;
         }
+        if([[firstBody.node.userData valueForKey:@"Bomb"] boolValue]){
+            firstBody.node.name = nil;
+            [_haloLayer enumerateChildNodesWithName:@"halo" usingBlock:^(SKNode *node, BOOL *stop) {
+                [self addExplosion:node.position withName:@"HaloExplosion"];
+                [node removeFromParent];
+            }];
+        }
         [firstBody.node removeFromParent];
         [secondBody.node removeFromParent];
     }
@@ -197,6 +235,7 @@ static NSString * const keyTopScore = @"TopScore";
         [self runAction: _haloBoomSound];
         [self addExplosion:firstBody.node.position withName:@"HaloExplosion"];
         [firstBody.node removeFromParent];
+        [_shieldPool addObject:secondBody.node];
         [secondBody.node removeFromParent];
     }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == LIFEBAR_CATEGORY){
@@ -206,13 +245,24 @@ static NSString * const keyTopScore = @"TopScore";
         [secondBody.node removeFromParent];
         [self gameOver];
     }
+    if(firstBody.categoryBitMask == BALL_CATEGORY && secondBody.categoryBitMask == SHIELDUP_CATEGORY){
+        // Shield powerup and ball collision - give a shield back!
+        [self runAction:_shieldUpSound];
+        if(_shieldPool.count > 0){
+            int randomIndex = arc4random_uniform((int)_shieldPool.count);
+            [_mainLayer addChild:[_shieldPool objectAtIndex:randomIndex]];
+            [_shieldPool removeObjectAtIndex:randomIndex];
+            [firstBody.node removeFromParent];
+            [secondBody.node removeFromParent];
+        }
+    }
 }
 
 -(void)newGame{
     // Set initial values
     self.score = 0;
     self.ammo = 5;
-    self.pointValue = 0;
+    self.pointValue = 1;
     [self actionForKey:@"SpawnHalo"].speed = 1;
     
     _scoreLabel.hidden = NO;
@@ -220,17 +270,11 @@ static NSString * const keyTopScore = @"TopScore";
     _menu.hidden = YES;
     gameOver = NO;
     [_mainLayer removeAllChildren];
-
-    
-    // Setup shield
-    for(int i = 0; i < 6; ++i){
-        SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:@"Block"];
-        shield.name = @"shield";
-        shield.position = CGPointMake(35 + (50 * i), 90);
-        [_mainLayer addChild:shield];
-        shield.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:CGSizeMake(42, 9)];
-        shield.physicsBody.categoryBitMask = SHIELD_CATEGORY;
-        shield.physicsBody.collisionBitMask = 0;
+    [_haloLayer removeAllChildren];
+     
+    while(_shieldPool.count > 0){
+        [_mainLayer addChild:[_shieldPool objectAtIndex:0]];
+        [_shieldPool removeObjectAtIndex:0];
     }
     
     // Setup life bar
@@ -252,6 +296,10 @@ static NSString * const keyTopScore = @"TopScore";
         [node removeFromParent];
     }];
     [_mainLayer enumerateChildNodesWithName:@"shield" usingBlock:^(SKNode *node, BOOL *stop) {
+        [_shieldPool addObject:node];
+        [node removeFromParent];
+    }];
+    [_mainLayer enumerateChildNodesWithName:@"shieldUp" usingBlock:^(SKNode *node, BOOL *stop) {
         [node removeFromParent];
     }];
     
@@ -293,6 +341,7 @@ static NSString * const keyTopScore = @"TopScore";
         ball.physicsBody.friction = 0.0;
         ball.physicsBody.categoryBitMask = BALL_CATEGORY;
         ball.physicsBody.collisionBitMask = EDGE_CATEGORY;
+        ball.physicsBody.contactTestBitMask = SHIELDUP_CATEGORY;
         
         // Create ball's particle trail
         NSString *ballTrailPath = [[NSBundle mainBundle] pathForResource:@"BallTrail" ofType:@"sks"];
@@ -326,7 +375,7 @@ static NSString * const keyTopScore = @"TopScore";
     halo.physicsBody.categoryBitMask = HALO_CATEGORY;
     halo.physicsBody.collisionBitMask = EDGE_CATEGORY | HALO_CATEGORY;
     halo.physicsBody.contactTestBitMask = BALL_CATEGORY | SHIELD_CATEGORY | LIFEBAR_CATEGORY;
-    [_mainLayer addChild:halo];
+    [_haloLayer addChild:halo];
     
     // Random point multiplier
     if(!gameOver && arc4random_uniform(6) == 0){
@@ -334,8 +383,29 @@ static NSString * const keyTopScore = @"TopScore";
         halo.userData = [[NSMutableDictionary alloc] init];
         [halo.userData setValue:@YES forKey:@"Multiplier"];
     }
+    if(!gameOver && arc4random_uniform(4) == 0){
+        halo.texture = [SKTexture textureWithImageNamed:@"HaloBomb"];
+        halo.userData = [[NSMutableDictionary alloc] init];
+        [halo.userData setValue:@YES forKey:@"Bomb"];
+    }
 
     
+}
+
+-(void)spawnShieldPowerUp{
+    if(_shieldPool.count > 0){
+        SKSpriteNode *shieldUp = [SKSpriteNode spriteNodeWithImageNamed:@"Block"];
+        shieldUp.name = @"shieldUp";
+        shieldUp.position = CGPointMake(self.size.width + shieldUp.size.width, randomInRange(150, self.size.height - 100));
+        shieldUp.physicsBody = [SKPhysicsBody bodyWithRectangleOfSize:CGSizeMake(42, 9)];
+        shieldUp.physicsBody.categoryBitMask = SHIELDUP_CATEGORY;
+        shieldUp.physicsBody.collisionBitMask = 0;
+        shieldUp.physicsBody.velocity = CGVectorMake(-100, randomInRange(-40, 40));
+        shieldUp.physicsBody.angularVelocity = M_PI;
+        shieldUp.physicsBody.linearDamping = 0;
+        shieldUp.physicsBody.angularDamping = 0;
+        [_mainLayer addChild:shieldUp];
+    }
 }
 
 // We remove the node from the parent so that the physics simulator stops processing the balls
@@ -348,6 +418,11 @@ static NSString * const keyTopScore = @"TopScore";
         }
         if([node respondsToSelector:@selector(updateTrail)]){
             [node performSelector:@selector(updateTrail) withObject:nil afterDelay:0.0];
+        }
+    }];
+    [_mainLayer enumerateChildNodesWithName:@"shieldUp" usingBlock:^(SKNode *node, BOOL *stop) {
+        if(node.position.x + node.frame.size.width < 0){ // Node is off the screen
+            [node removeFromParent];
         }
     }];
     
