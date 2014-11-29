@@ -174,8 +174,6 @@ static NSString * const keyTopScore = @"TopScore";
     // Setup shield pool
     _shieldPool = [[NSMutableArray alloc] init];
     
-    
-    
     // Setup shield
     for(int i = 0; i < 6; ++i){
         SKSpriteNode *shield = [SKSpriteNode spriteNodeWithImageNamed:@"Block"];
@@ -186,6 +184,9 @@ static NSString * const keyTopScore = @"TopScore";
         shield.physicsBody.collisionBitMask = 0;
         [_shieldPool addObject:shield];
     }
+    
+    [_menu show];
+    
 }
 
 -(void)setAmmo:(int)ammo{
@@ -294,11 +295,11 @@ static NSString * const keyTopScore = @"TopScore";
         [firstBody.node removeFromParent];
         [secondBody.node removeFromParent];
     }
-
     
 }
 
 -(void)newGame{
+    [_menu hide];
     // Set initial values
     self.score = 0;
     self.ammo = 5;
@@ -307,7 +308,6 @@ static NSString * const keyTopScore = @"TopScore";
     
     _scoreLabel.hidden = NO;
     _pointLabel.hidden = NO;
-    _menu.hidden = YES;
     gameOver = NO;
     [_mainLayer removeAllChildren];
     [_haloLayer removeAllChildren];
@@ -356,7 +356,10 @@ static NSString * const keyTopScore = @"TopScore";
     
     _scoreLabel.hidden = YES;
     _pointLabel.hidden = YES;
-    _menu.hidden = NO;
+    [self runAction:[SKAction waitForDuration:1] completion:^{
+        [_menu show];
+    }];
+
     gameOver = YES;
     
 }
@@ -532,7 +535,7 @@ static NSString * const keyTopScore = @"TopScore";
 -(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
     for (UITouch *touch in touches){
         /* Starts a new game when play button is touched */
-        if(gameOver){
+        if(gameOver && _menu.touchable){
             SKNode *n = [_menu nodeAtPoint:[touch locationInNode:_menu]];
             if([n.name isEqual:@"Play"]){
                 [self newGame];
