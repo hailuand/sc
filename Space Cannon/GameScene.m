@@ -27,6 +27,7 @@
     SKAction *_bgMusic;
     SKAction *_shieldUpSound;
     SKAction *_shootSound;
+    SKAction *_bounceSound;
     NSUserDefaults *_userDefaults;
     NSMutableArray *_shieldPool;
     
@@ -54,12 +55,15 @@ static uint32_t EDGE_CATEGORY = 0X1 << 2;
 static uint32_t SHIELD_CATEGORY = 0x1 << 3;
 static uint32_t LIFEBAR_CATEGORY = 0x1 << 4;
 static uint32_t SHIELDUP_CATEGORY = 0x1 << 5;
+static uint32_t MULTISHOT_CATERGORY = 0x1 << 6;
 static NSString * const keyTopScore = @"TopScore";
 
 -(void)didMoveToView:(SKView *)view {
     /* Setup your scene here */
     self.size = view.bounds.size;
     self.physicsWorld.contactDelegate = self;
+    self.killCount = 0;
+    self.multiShot = NO;
     
     // Load sound files
     _deathSound = [SKAction playSoundFileNamed:@"death.caf" waitForCompletion:NO];
@@ -67,6 +71,7 @@ static NSString * const keyTopScore = @"TopScore";
     _haloBoomSound = [SKAction playSoundFileNamed:@"halo_boom.caf" waitForCompletion:NO];
     _shootSound = [SKAction playSoundFileNamed:@"shoot.caf" waitForCompletion:NO];
     _shieldUpSound = [SKAction playSoundFileNamed:@"ShieldUp.caf" waitForCompletion:NO];
+    _bounceSound = [SKAction playSoundFileNamed:@"Bounce.caf" waitForCompletion:NO];
     
     // Megaman II!
     SKAction *gameMusic = [SKAction repeatActionForever:_bgMusic];
@@ -132,7 +137,8 @@ static NSString * const keyTopScore = @"TopScore";
     [self addChild:_ammoDisplay];
     self.ammo = 5;
     SKAction *incrementAmmo = [SKAction sequence:@[[SKAction waitForDuration:1], [SKAction runBlock:^{
-        self.ammo++;
+        if(!self.multiShot)
+            self.ammo++;
     }]]];
     [self runAction:[SKAction repeatActionForever:incrementAmmo]];
     
@@ -159,7 +165,7 @@ static NSString * const keyTopScore = @"TopScore";
     self.score = 0;
     gameOver = YES;
     _scoreLabel.hidden = YES;
-    _pointLabel.hidden = NO;
+    _pointLabel.hidden =YES;
     
     // Load top score
     _userDefaults = [NSUserDefaults standardUserDefaults];
@@ -199,6 +205,15 @@ static NSString * const keyTopScore = @"TopScore";
     _pointLabel.text = [NSString stringWithFormat:@"Points: x%d", _pointValue];
 }
 
+-(void)setMultiShot:(BOOL)multiShot{
+    _multiShot = multiShot;
+    if (multiShot) {
+        _cannon.texture = [SKTexture textureWithImageNamed:@"GreenCannon"];
+    } else {
+        _cannon.texture = [SKTexture textureWithImageNamed:@"Cannon"];
+    }
+}
+
 -(void)didBeginContact:(SKPhysicsContact *)contact{
     SKPhysicsBody *firstBody;
     SKPhysicsBody *secondBody;
@@ -212,8 +227,20 @@ static NSString * const keyTopScore = @"TopScore";
         firstBody = contact.bodyB;
         secondBody = contact.bodyA;
     }
+    if(firstBody.categoryBitMask == BALL_CATEGORY && secondBody.categoryBitMask == EDGE_CATEGORY){
+        // Halo and edge collided
+        [self runAction:_bounceSound];
+        if([firstBody.node isKindOfClass:[CCBall class]]){
+            ((CCBall*)firstBody.node).bounces++;
+            if(((CCBall*)firstBody.node).bounces > 3)
+                [firstBody.node removeFromParent];
+        }
+    }
     if(firstBody.categoryBitMask == HALO_CATEGORY && secondBody.categoryBitMask == BALL_CATEGORY){
         // halo and ball collided
+        self.killCount++;
+        if(self.killCount % 10 == 0)
+            [self spawnMultiShotPowerUp];
         self.score += self.pointValue;
         [self runAction: _haloBoomSound];
         [self addExplosion:firstBody.node.position withName:@"HaloExplosion"];
@@ -256,6 +283,19 @@ static NSString * const keyTopScore = @"TopScore";
             [secondBody.node removeFromParent];
         }
     }
+    if(firstBody.categoryBitMask == BALL_CATEGORY && secondBody.categoryBitMask == MULTISHOT_CATERGORY){
+        // multishot powerup and ball collision - 5 multishots!
+        [_mainLayer enumerateChildNodesWithName:@"multiShot" usingBlock:^(SKNode *node, BOOL *stop) {
+            [node removeFromParent];
+        }];
+        [self runAction:_shieldUpSound];
+        self.multiShot = YES;
+        self.ammo = 5;
+        [firstBody.node removeFromParent];
+        [secondBody.node removeFromParent];
+    }
+
+    
 }
 
 -(void)newGame{
@@ -288,7 +328,7 @@ static NSString * const keyTopScore = @"TopScore";
 
 -(void)gameOver{
    
-    [_mainLayer enumerateChildNodesWithName:@"halo" usingBlock:^(SKNode *node, BOOL *stop) {
+    [_haloLayer enumerateChildNodesWithName:@"halo" usingBlock:^(SKNode *node, BOOL *stop) {
         [self addExplosion:node.position withName:@"HaloExplosion"];
         [node removeFromParent];
     }];
@@ -315,42 +355,40 @@ static NSString * const keyTopScore = @"TopScore";
     }
     
     _scoreLabel.hidden = YES;
+    _pointLabel.hidden = YES;
     _menu.hidden = NO;
     gameOver = YES;
     
 }
 
 -(void)shoot{
-    if(self.ammo > 0){
-        // Create ball
-        CCBall *ball = [CCBall spriteNodeWithImageNamed:@"Ball"];
-        [self runAction:_shootSound];
-        self.ammo--;
-        ball.name = @"ball";
-        CGVector rotationVector = radiansToVector(_cannon.zRotation);
-        // Need to have the ball appear the cannon's chute, and we need to take into account
-        // the rotation which is why we have rotationVector
-        ball.position = CGPointMake(_cannon.position.x + _cannon.size.width * 0.5 * rotationVector.dx,
-                                    _cannon.position.y + _cannon.size.width * 0.5 * rotationVector.dy);
-        // Modify momentum retention after interaction with other physicsBody
-        
-        ball.physicsBody =  [SKPhysicsBody bodyWithCircleOfRadius:6];
-        ball.physicsBody.velocity = CGVectorMake(rotationVector.dx * SHOOT_SPEED, rotationVector.dy * SHOOT_SPEED);
-        ball.physicsBody.restitution = 1.0f;
-        ball.physicsBody.linearDamping = 0.0;
-        ball.physicsBody.friction = 0.0;
-        ball.physicsBody.categoryBitMask = BALL_CATEGORY;
-        ball.physicsBody.collisionBitMask = EDGE_CATEGORY;
-        ball.physicsBody.contactTestBitMask = SHIELDUP_CATEGORY;
-        
-        // Create ball's particle trail
-        NSString *ballTrailPath = [[NSBundle mainBundle] pathForResource:@"BallTrail" ofType:@"sks"];
-        SKEmitterNode *ballTrail = [NSKeyedUnarchiver unarchiveObjectWithFile:ballTrailPath];
-        ballTrail.targetNode = _mainLayer;
-        [_mainLayer addChild:ballTrail];
-        [_mainLayer addChild:ball];
-        ball.trail = ballTrail;
-    }
+    // Create ball
+    CCBall *ball = [CCBall spriteNodeWithImageNamed:@"Ball"];
+    [self runAction:_shootSound];
+    ball.name = @"ball";
+    CGVector rotationVector = radiansToVector(_cannon.zRotation);
+    // Need to have the ball appear the cannon's chute, and we need to take into account
+    // the rotation which is why we have rotationVector
+    ball.position = CGPointMake(_cannon.position.x + _cannon.size.width * 0.5 * rotationVector.dx,
+                                _cannon.position.y + _cannon.size.width * 0.5 * rotationVector.dy);
+    // Modify momentum retention after interaction with other physicsBody
+    
+    ball.physicsBody =  [SKPhysicsBody bodyWithCircleOfRadius:6];
+    ball.physicsBody.velocity = CGVectorMake(rotationVector.dx * SHOOT_SPEED, rotationVector.dy * SHOOT_SPEED);
+    ball.physicsBody.restitution = 1.0f;
+    ball.physicsBody.linearDamping = 0.0;
+    ball.physicsBody.friction = 0.0;
+    ball.physicsBody.categoryBitMask = BALL_CATEGORY;
+    ball.physicsBody.collisionBitMask = EDGE_CATEGORY;
+    ball.physicsBody.contactTestBitMask = SHIELDUP_CATEGORY | MULTISHOT_CATERGORY | EDGE_CATEGORY;
+    
+    // Create ball's particle trail
+    NSString *ballTrailPath = [[NSBundle mainBundle] pathForResource:@"BallTrail" ofType:@"sks"];
+    SKEmitterNode *ballTrail = [NSKeyedUnarchiver unarchiveObjectWithFile:ballTrailPath];
+    ballTrail.targetNode = _mainLayer;
+    [_mainLayer addChild:ballTrail];
+    [_mainLayer addChild:ball];
+    ball.trail = ballTrail;
 }
 
 
@@ -408,6 +446,20 @@ static NSString * const keyTopScore = @"TopScore";
     }
 }
 
+-(void)spawnMultiShotPowerUp{
+        SKSpriteNode *multiShot = [SKSpriteNode spriteNodeWithImageNamed:@"MultiShotPowerUp"];
+        multiShot.name = @"multiShot";
+        multiShot.position = CGPointMake(self.size.width + multiShot.size.width, randomInRange(150, self.size.height - 100));
+        multiShot.physicsBody =  [SKPhysicsBody bodyWithCircleOfRadius:10];
+        multiShot.physicsBody.categoryBitMask = MULTISHOT_CATERGORY;
+        multiShot.physicsBody.collisionBitMask = 0;
+        multiShot.physicsBody.velocity = CGVectorMake(-100, randomInRange(-40, 40));
+        multiShot.physicsBody.angularVelocity = M_PI;
+        multiShot.physicsBody.angularDamping = 0;
+        multiShot.physicsBody.linearDamping = 0;
+        [_mainLayer addChild:multiShot];
+}
+
 // We remove the node from the parent so that the physics simulator stops processing the balls
 // once they have gone off screen (performance)
 -(void)didSimulatePhysics{
@@ -420,15 +472,35 @@ static NSString * const keyTopScore = @"TopScore";
             [node performSelector:@selector(updateTrail) withObject:nil afterDelay:0.0];
         }
     }];
+    
     [_mainLayer enumerateChildNodesWithName:@"shieldUp" usingBlock:^(SKNode *node, BOOL *stop) {
         if(node.position.x + node.frame.size.width < 0){ // Node is off the screen
             [node removeFromParent];
         }
     }];
     
-    if(didShoot == TRUE){
-        [self shoot];
-        didShoot = FALSE;
+    [_mainLayer enumerateChildNodesWithName:@"multiShot" usingBlock:^(SKNode *node, BOOL *stop) {
+        if(node.position.x + node.frame.size.width < 0){ // Node is off the screen
+            [node removeFromParent];
+        }
+    }];
+    
+    
+    if (didShoot) {
+        if (self.ammo > 0) {
+            self.ammo--;
+            [self shoot];
+            if (self.multiShot) {
+                for (int i = 1; i < 5; i++) {
+                    [self performSelector:@selector(shoot) withObject:nil afterDelay:0.1 * i];
+                }
+                if (self.ammo == 0) {
+                    self.multiShot = NO;
+                    self.ammo = 5;
+                }
+            }
+        }
+        didShoot = NO;
     }
 }
 

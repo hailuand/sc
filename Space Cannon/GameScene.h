@@ -13,5 +13,6 @@
 @property (nonatomic) int ammo;
 @property (nonatomic) int score;
 @property (nonatomic) int pointValue;
-
+@property (nonatomic) int killCount;
+@property (nonatomic) BOOL multiShot;
 @end
